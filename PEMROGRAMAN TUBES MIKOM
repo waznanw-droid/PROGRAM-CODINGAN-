@@ -1,0 +1,48 @@
+#include <SoftwareSerial.h>
+#include <DFRobotDFPlayerMini.h>
+
+#define BUTTON_PIN 2   // PD2
+
+SoftwareSerial dfSerial(4, 5); 
+// RX = PD4 (pin 6)
+// TX = PD5 (pin 11)
+
+DFRobotDFPlayerMini dfplayer;
+
+bool lastButtonState = HIGH;
+bool suaraAktif = false;
+
+void setup() {
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+  Serial.begin(9600);     // USB-TTL
+  dfSerial.begin(9600);   // DFPlayer
+
+  if (!dfplayer.begin(dfSerial)) {
+    Serial.println("DFPlayer gagal!");
+    while (1);
+  }
+
+  dfplayer.volume(20);
+  Serial.println("Sistem siap");
+}
+
+void loop() {
+  bool buttonState = digitalRead(BUTTON_PIN);
+
+  if (buttonState == LOW && lastButtonState == HIGH) {
+    dfplayer.play(1);
+    suaraAktif = true;
+    Serial.println("Suara AKTIF");
+    delay(300);
+  }
+
+  if (dfplayer.available()) {
+    if (dfplayer.readType() == DFPlayerPlayFinished) {
+      suaraAktif = false;
+      Serial.println("Suara SELESAI");
+    }
+  }
+
+  lastButtonState = buttonState;
+}
