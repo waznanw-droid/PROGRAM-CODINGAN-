@@ -1,47 +1,43 @@
 #include <SoftwareSerial.h>
 #include <DFRobotDFPlayerMini.h>
 
-#define BUTTON_PIN 2   // PD2
+/*
+ATmega328P Standalone Pin Mapping
+--------------------------------
+D2 (PD2) -> DFPlayer TX
+D3 (PD3) -> DFPlayer RX (via 1k resistor)
+D4 (PD4) -> Push Button
+*/
 
-SoftwareSerial dfSerial(4, 5); 
-// RX = PD4 (pin 6)
-// TX = PD5 (pin 11)
+#define DF_RX 2
+#define DF_TX 3
+#define BUTTON 4
 
-DFRobotDFPlayerMini dfplayer;
+SoftwareSerial mp3Serial(DF_RX, DF_TX);
+DFRobotDFPlayerMini mp3;
 
 bool lastButtonState = HIGH;
-bool suaraAktif = false;
 
 void setup() {
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(BUTTON, INPUT_PULLUP);
 
-  Serial.begin(9600);     // USB-TTL
-  dfSerial.begin(9600);   // DFPlayer
+  mp3Serial.begin(9600);
+  delay(1000); // tunggu DFPlayer siap
 
-  if (!dfplayer.begin(dfSerial)) {
-    Serial.println("DFPlayer gagal!");
-    while (1);
+  if (!mp3.begin(mp3Serial)) {
+    while (1); // STOP jika gagal
   }
 
-  dfplayer.volume(20);
-  Serial.println("Sistem siap");
+  mp3.volume(15); // 0–30
 }
 
 void loop() {
-  bool buttonState = digitalRead(BUTTON_PIN);
+  bool buttonState = digitalRead(BUTTON);
 
+  // tombol ditekan (HIGH -> LOW)
   if (buttonState == LOW && lastButtonState == HIGH) {
-    dfplayer.play(1);
-    suaraAktif = true;
-    Serial.println("Suara AKTIF");
-    delay(300);
-  }
-
-  if (dfplayer.available()) {
-    if (dfplayer.readType() == DFPlayerPlayFinished) {
-      suaraAktif = false;
-      Serial.println("Suara SELESAI");
-    }
+    mp3.play(1);       // 0001.mp3
+    delay(300);        // debounce
   }
 
   lastButtonState = buttonState;
